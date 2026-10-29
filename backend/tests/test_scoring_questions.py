@@ -4,21 +4,25 @@ from sqlalchemy.exc import IntegrityError
 from app import models
 from app.db import SessionLocal
 from app.utils import maturity_level
+from app.routes.dashboard import department_statistics
+from app.services.questions import questions_for
 from tests.conftest import login
 
 
 def test_dashboard_weights_people_equally(client):
     with SessionLocal() as db:
-        member = db.query(models.Membership).join(models.User).filter(models.User.email == "neha@northwind.test").one()
-        db.add(models.Response(membership_id=member.id, question_id="common-freq", answer="Never", score=1))
+        db.query(models.Response).delete()
+        members = db.query(models.Membership).join(models.User).filter(models.User.email.in_(["priya@northwind.test", "arjun@northwind.test"])).all()
+        for member in members:
+            score = 1 if member.seniority == "junior" else 4
+            for question in questions_for(member.job_role, member.seniority):
+                db.add(models.Response(membership_id=member.id, question_id=question["id"], answer="Example", score=score))
         db.commit()
-    headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
-    departments = client.get("/dashboard", headers=headers).json()["departments"]
-    sales = next(d for d in departments if d["department"] == "Sales")
-    engineering = next(d for d in departments if d["department"] == "Engineering")
-    assert sales["average_score"] == 2.5
-    assert engineering["average_score"] is None
-    assert engineering["level"] == "Not assessed"
+        statistics, _ = department_statistics(members, db)
+        assert statistics["average_score"] == 2.5
+        empty, _ = department_statistics([], db)
+        assert empty["average_score"] is None
+        assert empty["level"] == "Not assessed"
 
 
 @pytest.mark.parametrize("score,level", [(None, "Not assessed"), (1.99, "Beginner"), (2, "Exploring"), (3, "Practitioner"), (4, "Leader")])
@@ -50,7 +54,7 @@ def test_submit_rejects_unassigned_questions(client, question_id):
 
 
 def test_invalid_submission_saves_nothing(client):
-    headers, _ = login(client, "neha@northwind.test", "Northwind Logistics")
+    headers, _ = login(client, "sara@northwind.test", "Northwind Logistics")
     response = client.post("/diagnostic/submit", headers=headers, json={"answers": [{"question_id": "common-freq", "answer": "Daily"}, {"question_id": "common-policy", "answer": "invalid"}]})
     assert response.status_code == 400
     assert client.get("/reports/me", headers=headers).json()["answered"] == 0

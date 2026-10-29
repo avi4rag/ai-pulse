@@ -6,6 +6,7 @@ from .db import Base, engine, SessionLocal
 from . import models
 from .auth import hash_password
 from .config import DEV_MODE
+from .services.questions import questions_for
 
 PEOPLE_NORTHWIND = [
     # name, email, department, role, job_role, seniority
@@ -13,6 +14,8 @@ PEOPLE_NORTHWIND = [
     ("Vikram Shah", "vikram@northwind.test", "Sales", "employee", "sales", "senior"),
     ("Neha Gupta", "neha@northwind.test", "Sales", "employee", "sales", "junior"),
     ("Rohan Mehta", "rohan@northwind.test", "Sales", "employee", "sales", "mid"),
+    ("Mira Sen", "mira@northwind.test", "Sales", "employee", "sales", "junior"),
+    ("Aman Roy", "aman@northwind.test", "Sales", "employee", "sales", "mid"),
     ("Priya Nair", "priya@northwind.test", "Support", "employee", "support", "junior"),
     ("Arjun Iyer", "arjun@northwind.test", "Support", "employee", "support", "senior"),
     ("Kavitha Menon", "kavitha@northwind.test", "Support", "employee", "support", "mid"),
@@ -87,6 +90,15 @@ def run():
     answer("kabir@bluepeak.test", bp, "common-open", "Uploaded our full customer refund list to an AI tool to find patterns.", 3, "Good idea, unsafe data handling.", ["customer_data_shared", "confidential_data_shared"])
     answer("kabir@bluepeak.test", bp, "common-freq", "Daily", 4)
 
+    db.flush()
+    sales_members = db.query(models.Membership).filter_by(org_id=nw.id, department_id=nw_depts["Sales"]).all()
+    for member in sales_members:
+        existing = {r.question_id for r in db.query(models.Response).filter_by(membership_id=member.id).all()}
+        for question in questions_for(member.job_role, member.seniority):
+            if question["id"] in existing:
+                continue
+            text = question["options"][3]["text"] if question["type"] == "mcq" else "I draft work with AI, remove private details, and review the result."
+            db.add(models.Response(membership_id=member.id, question_id=question["id"], answer=text, score=4, reason="Reviewed demo answer.", flags=[]))
     db.commit()
     db.close()
     print("Seeded. Log in with any seeded email and password 'pulse123'.")

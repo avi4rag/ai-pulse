@@ -52,7 +52,7 @@ def test_failure_is_unscored_after_two_attempts(monkeypatch, error):
 
 def test_unscored_answer_is_saved_and_excluded(client, monkeypatch):
     monkeypatch.setattr(llm, "score_answer", lambda *args: "bad")
-    headers, _ = login(client, "neha@northwind.test", "Northwind Logistics")
+    headers, _ = login(client, "sara@northwind.test", "Northwind Logistics")
     response = client.post("/diagnostic/submit", headers=headers, json={"answers": [{"question_id": "common-freq", "answer": "Daily"}, {"question_id": "common-open", "answer": "Example"}]})
     assert response.status_code == 200
     report = client.get("/reports/me", headers=headers).json()
