@@ -11,3 +11,7 @@ My mistake: I initially tried reading README.md from the workspace parent direct
 Untracked backend/.env, added a development template, required a strong production secret, added salted bcrypt passwords, configurable CORS, a non-root Docker image, and a development/local-database seed guard. All eight new security tests pass; full suite: 16 passed and the existing seniority failure remains. Rotate the old signing key manually; it remains in history. Existing SHA-256 accounts need password resets or a development reseed.
 
 My mistake: my first patch tried deleting and adding the same path in one operation, which the patch tool rejected. No partial edits were applied; I reapplied it as an update.
+
+## Job 3: Scoring and question assignment
+
+Averaged each respondent before departments, shared the <2/<3/<4 maturity scale, ranked seniority explicitly, enforced assigned questions, and used a unique constraint plus SQLite upsert to replace answers. Tests cover unequal answer counts, unassessed groups, thresholds, invalid batches, role/seniority restrictions and database uniqueness. Full suite: 29 passed. Existing databases need a planned migration before using the new constraint; development databases can be reseeded. No new implementation mistake found in this job.
