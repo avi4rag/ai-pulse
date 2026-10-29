@@ -25,3 +25,9 @@ Validated all ten canned replies, stripped code fences, required integer scores 
 Defined completion as a nonempty answer to every currently assigned question, including unscored open answers. Only completers contribute scores and risks. Departments need five completers; smaller departments combine anonymously only if Other teams reaches five, otherwise return just a hidden placeholder without names or counts. Seed now has five completed Sales members and small incomplete departments. Updated earlier tests for this intentional seed change.
 
 My mistake: a privacy test accessed an expired SQLAlchemy object after its session closed, causing DetachedInstanceError. I saved its integer ID before closing the session and reran the suite.
+
+## Job 6: Right to delete
+
+Added DELETE /reports/me scoped to the authenticated membership. Reports and dashboards are computed from remaining rows immediately; repeated deletion is harmless. Tests verify five-to-four suppression, empty reports, authentication, other-user preservation and the caller's other organization remaining unchanged.
+
+My mistake: the cross-organization test counted rows before committing its setup. With autoflush disabled, that excluded the two new rows. I moved the baseline count after commit.
