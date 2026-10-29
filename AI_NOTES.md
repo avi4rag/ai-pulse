@@ -37,3 +37,7 @@ My mistake: the cross-organization test counted rows before committing its setup
 Added POST /reports/me/suggestions with three validated actions, mock and live support, one retry and existing role advice as fallback. Sends only the caller's role, seniority, question IDs, scores, allowed flags and fixed answer choices. Raw open text and reasons are excluded to avoid forwarding embedded identifiers. Suggestions regenerate, so deletion leaves no stored copy and subsequent requests return none. Frontend display follows in job 9. Full suite: 80 passed; live calls are mocked.
 
 My mistake: adding a final full stop after a 240-character cap could produce 241 characters. I reduced the pre-punctuation cap and tightened the test. The content filter is conservative basic validation, not a guarantee against every unsafe model suggestion.
+
+## Job 8: Developer experience
+
+Added a Python command runner for backend/frontend/test/build/seed, clean-checkout environment setup, and GitHub Actions for Python tests plus npm ci/build. Added employee/admin, multi-org permissions, expired/forged/missing/malformed claim coverage; malformed signed IDs now return authorization errors. Validation: 90 backend tests pass; npm ci and production build pass. The first build hit a Windows sandbox ancestor-directory access restriction; rerunning with approved filesystem access passed without changing build code. Docker image execution has not been verified locally. No new implementation mistake found.
