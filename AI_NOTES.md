@@ -31,3 +31,9 @@ My mistake: a privacy test accessed an expired SQLAlchemy object after its sessi
 Added DELETE /reports/me scoped to the authenticated membership. Reports and dashboards are computed from remaining rows immediately; repeated deletion is harmless. Tests verify five-to-four suppression, empty reports, authentication, other-user preservation and the caller's other organization remaining unchanged.
 
 My mistake: the cross-organization test counted rows before committing its setup. With autoflush disabled, that excluded the two new rows. I moved the baseline count after commit.
+
+## Job 7: Personal improvement suggestions
+
+Added POST /reports/me/suggestions with three validated actions, mock and live support, one retry and existing role advice as fallback. Sends only the caller's role, seniority, question IDs, scores, allowed flags and fixed answer choices. Raw open text and reasons are excluded to avoid forwarding embedded identifiers. Suggestions regenerate, so deletion leaves no stored copy and subsequent requests return none. Frontend display follows in job 9. Full suite: 80 passed; live calls are mocked.
+
+My mistake: adding a final full stop after a 240-character cap could produce 241 characters. I reduced the pre-punctuation cap and tightened the test. The content filter is conservative basic validation, not a guarantee against every unsafe model suggestion.
