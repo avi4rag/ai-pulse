@@ -41,3 +41,9 @@ My mistake: adding a final full stop after a 240-character cap could produce 241
 ## Job 8: Developer experience
 
 Added a Python command runner for backend/frontend/test/build/seed, clean-checkout environment setup, and GitHub Actions for Python tests plus npm ci/build. Added employee/admin, multi-org permissions, expired/forged/missing/malformed claim coverage; malformed signed IDs now return authorization errors. Validation: 90 backend tests pass; npm ci and production build pass. The first build hit a Windows sandbox ancestor-directory access restriction; rerunning with approved filesystem access passed without changing build code. Docker image execution has not been verified locally. No new implementation mistake found.
+
+## Job 9: Frontend
+
+Replaced JSON output with a responsive dashboard, hidden-group states, visible-only summary counts and risk signals. Added persistent validated session metadata, logout/401 cleanup, diagnostic progress and required answers, reports with private suggestions, deletion confirmation, and loading/error/retry states. Added 11 built-in Node API/session tests and a dependency-free headless Chrome smoke script using an isolated temporary database. Validation: 90 backend tests, 11 frontend tests and production build pass. Browser smoke passed login, admin privacy, incomplete-submit prevention, submission, suggestions, refresh persistence, cancel/confirm deletion, five-to-four hiding, mobile overflow and session expiry. Inspected desktop and mobile screenshots.
+
+My mistakes: a single write command exceeded Windows' command-length limit before running, so I split the writes. The first browser selector expected a button label without its decorative arrow; I changed it to match the label prefix and reran successfully. The Docker CLI exists but its daemon is not running, so container execution remains unverified.
