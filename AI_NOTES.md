@@ -59,3 +59,9 @@ The clean npm install exposed two existing tooling vulnerabilities (one high, on
 The clean-install advisory scan exposed vulnerable existing Vite 5.4.11/esbuild tooling. Verified maintainer guidance and plugin compatibility, then upgraded only the existing Vite dependency to patched 6.4.4 and regenerated its lockfile. Added npm audit to CI and a real development-server CORS regression: it failed against the old version because an arbitrary Origin received Access-Control-Allow-Origin: *, and passes on the patched version. The updated npm audit reports zero known vulnerabilities. Validation: 90 backend tests, 12 frontend tests, production build and the complete isolated browser smoke pass. Rechecked the patched lockfile with a fresh install in the clean archive.
 
 My mistakes: the first attempt to copy the regression test into the old clean archive used a frontend-relative path while already inside frontend; it failed without copying, and I corrected it to an absolute path. A documentation patch matched only part of a long line and was rejected before changes; I corrected the replacement. No forced audit upgrade or new direct frontend library was used.
+
+## Demo deployment publication
+
+The existing Dockerfile commit seeds demo data before startup and reads PORT with an 8000 fallback. Published it through a PR explicitly targeting avi4rag/ai-pulse:main, preserving the fork's newer README changes. Demo hosting requires DEV_MODE=true and the guarded local SQLite URL; every container restart reseeds the demo database. Container execution remains unverified because the Docker daemon was unavailable.
+
+My mistake: I previously reported that deploy-demo was pushed without clearly explaining that the fork's main branch did not contain it yet. I checked both repositories and found no existing deploy-demo PR in either; the change was on a branch of the fork, not merged into upstream. This PR corrects the missing integration into the fork's main branch.
