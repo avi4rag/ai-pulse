@@ -54,10 +54,11 @@ python scripts/manage.py test
 python scripts/manage.py build
 cd frontend
 npm test
+npm audit --audit-level=moderate
 cd ..
 ```
 
-`python scripts/manage.py test` runs `python -m pytest` inside `backend`. The Node tests use Node's built-in test runner and add no testing library. CI runs backend tests, frontend tests and the frontend production build on pushes and pull requests.
+`python scripts/manage.py test` runs `python -m pytest` inside `backend`. The Node tests use Node's built-in test runner and add no testing library. CI runs backend tests, frontend tests, an npm advisory check and the frontend production build on pushes and pull requests.
 
 A real browser smoke test is available after installing dependencies and building:
 
@@ -67,7 +68,7 @@ node scripts/browser-smoke.mjs
 
 It requires Chrome/Chromium, Node 22+, Python dependencies and free ports 8000, 5173 and 9223. On Windows it finds Chrome at its usual Program Files location. Set `CHROME_PATH` for another installation; set `PYTHON` if the Python executable has a different path. The script seeds a separate temporary database, starts its own servers and headless browser, and stops those processes when finished. It does not reset the normal demo database. Screenshots and the temporary profile remain in the printed temporary directory.
 
-Local validation: 90 backend tests, 11 frontend tests and the production build passed. The browser test passed login, privacy states, required answers, submission, three suggestions, refresh persistence, deletion cancellation/confirmation, immediate group hiding, mobile overflow and expired-session logout. The original suite had 7 passing tests and one failing seniority test. The corrected tenant tests first failed on the original vulnerabilities before passing with the fix.
+Local validation: 90 backend tests, 12 frontend tests and the production build passed. The browser test passed login, privacy states, required answers, submission, three suggestions, refresh persistence, deletion cancellation/confirmation, immediate group hiding, mobile overflow and expired-session logout. The original suite had 7 passing tests and one failing seniority test. The corrected tenant tests first failed on the original vulnerabilities before passing with the fix.
 
 Existing deprecation warnings come from the datetime default and test-client dependencies. They are not hidden or treated as proof of failure. Live LLM calls were mocked. The Docker daemon was unavailable locally, so I did not run the container image.
 
@@ -166,6 +167,8 @@ That command is a local smoke setup. A production container needs production env
 
 ## What I deliberately left out
 
+A clean install exposed existing Vite/esbuild advisories, including a high-severity Windows development-tooling issue. I updated the existing Vite dependency from 5.4.11 to patched 6.4.4, which the current React plugin supports, and regenerated the lockfile. I chose this smaller upgrade instead of forcing the newest major. See the [maintainer advisory](https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm) and [Vite migration guidance](https://v6.vite.dev/guide/migration). The updated dependency graph reports zero known npm vulnerabilities at validation time. A new development-server CORS test fails on the old Vite version and passes on the patched version. The npm advisory scan is a useful check, not a complete dependency or application audit.
+
 - Alembic migrations and a production data-upgrade plan. Fresh SQLite schemas work; existing schemas need a reviewed migration.
 - Postgres and a multi-worker database strategy. The upsert currently targets SQLite, which is the assessment database.
 - httpOnly cookie authentication. Tokens remain in localStorage, so XSS can expose them. Logout clears local state but does not revoke a stolen token server-side.
@@ -210,3 +213,4 @@ Each job has its own branch and merge commit. The existing history was kept.
 | Personal suggestions | [#7](https://github.com/avi4rag/ai-pulse/pull/7) |
 | Developer experience | [#8](https://github.com/avi4rag/ai-pulse/pull/8) |
 | Frontend | [#9](https://github.com/avi4rag/ai-pulse/pull/9) |
+| Assessment documentation | [#10](https://github.com/avi4rag/ai-pulse/pull/10) |
