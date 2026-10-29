@@ -17,6 +17,22 @@ This codebase was started by a previous developer who has since left. It runs, b
 
 ## Run it locally
 
+Use Python 3.12+ and Node.js 22. From a clean checkout, first create a Python virtual environment and install dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r backend/requirements.txt
+Copy-Item backend/.env.example backend/.env
+cd frontend
+npm ci
+cd ..
+```
+
+On Linux/macOS, activate with `source .venv/bin/activate` and copy with `cp backend/.env.example backend/.env`. The example explicitly enables development mode. Production must set `DEV_MODE=false`, a unique random `SECRET_KEY` of at least 32 characters, and explicit `CORS_ORIGINS`. Never commit `.env`.
+
+From the repository root, run `python scripts/manage.py seed` once (development only; resets local demo data), then `python scripts/manage.py backend`. In a second terminal run `python scripts/manage.py frontend`. Use `python scripts/manage.py test` for backend tests and `python scripts/manage.py build` for the frontend production build. CI runs both on pushes and pull requests.
+
 Backend:
 
 ```bash
