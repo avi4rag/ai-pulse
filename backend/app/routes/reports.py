@@ -8,6 +8,13 @@ from ..utils import maturity_level
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
+
+@router.delete("/me")
+def delete_my_report(m: models.Membership = Depends(current_membership), db: Session = Depends(get_db)):
+    deleted = db.query(models.Response).filter_by(membership_id=m.id).delete()
+    db.commit()
+    return {"deleted": deleted}
+
 NEXT_STEPS = {
     "support": ["Use AI to draft first replies, then edit", "Summarise long ticket threads before escalating", "Never paste customer details into public chatbots"],
     "engineering": ["Use a code assistant for tests and refactors", "Review every AI suggestion before merging", "Keep secrets and customer data out of prompts"],
