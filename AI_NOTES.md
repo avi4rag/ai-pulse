@@ -15,3 +15,7 @@ My mistake: my first patch tried deleting and adding the same path in one operat
 ## Job 3: Scoring and question assignment
 
 Averaged each respondent before departments, shared the <2/<3/<4 maturity scale, ranked seniority explicitly, enforced assigned questions, and used a unique constraint plus SQLite upsert to replace answers. Tests cover unequal answer counts, unassessed groups, thresholds, invalid batches, role/seniority restrictions and database uniqueness. Full suite: 29 passed. Existing databases need a planned migration before using the new constraint; development databases can be reseeded. No new implementation mistake found in this job.
+
+## Job 4: AI validation
+
+Validated all ten canned replies, stripped code fences, required integer scores 1–5 (excluding booleans), filtered flags, defaulted reasons and retried once before saving unscored answers. Separated system instructions from JSON employee data and bounded live requests to 15 seconds per attempt. Tests cover malformed shapes, retries, HTTP/timeout failures, prompt separation and unscored persistence. Prompt separation reduces injection risk; it does not prove model obedience. No new implementation mistake found.
