@@ -5,6 +5,7 @@ All passwords are: pulse123
 from .db import Base, engine, SessionLocal
 from . import models
 from .auth import hash_password
+from .config import DEV_MODE
 
 PEOPLE_NORTHWIND = [
     # name, email, department, role, job_role, seniority
@@ -28,6 +29,8 @@ PEOPLE_BLUEPEAK = [
 
 
 def run():
+    if not DEV_MODE or engine.url.get_backend_name() != "sqlite" or engine.url.database not in {"./aipulse.db", "./test.db"}:
+        raise RuntimeError("Seeding requires DEV_MODE=true and the local aipulse.db or test.db SQLite database")
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

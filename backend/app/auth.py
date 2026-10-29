@@ -1,4 +1,4 @@
-import hashlib
+import bcrypt
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -11,11 +11,14 @@ from . import models
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    return hash_password(password) == hashed
+    try:
+        return bcrypt.checkpw(password.encode(), hashed.encode())
+    except ValueError:
+        return False
 
 
 def make_token(user_id: int, org_id: int | None = None) -> str:
