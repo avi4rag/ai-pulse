@@ -1,14 +1,38 @@
 # AI Pulse
 
-AI Pulse helps employees understand their AI habits and gives administrators a department-level view. It uses FastAPI, SQLAlchemy and SQLite for the backend, with React and Vite for the frontend.
+**AI Pulse** is a multi-organization AI literacy and workplace AI usage assessment platform. Employees complete role-specific diagnostics, receive personal maturity reports and actionable improvement suggestions, while administrators see privacy-aware department insights.
 
-This is my assessment implementation and a pilot starting point. I would not call it a complete enterprise production deployment. The limitations below still need decisions and work.
+Built with **FastAPI, SQLAlchemy and SQLite** on the backend and **React + Vite** on the frontend.
+
+> **Project status:** Assessment implementation and pilot prototype, not a production-ready enterprise deployment. See [Current limitations](#current-limitations) before using real employee data.
+
+## Key features
+
+- **Multi-organization access:** Users can belong to multiple organizations with different roles and permissions.
+- **Role-based diagnostics:** Question assignments depend on job role and seniority.
+- **AI-assisted scoring:** Open-ended answers can be scored using a mock or configured live model, with validation and safe fallback behavior.
+- **Personal reports:** Employees can review maturity scores, risk indicators and three practical improvement suggestions.
+- **Privacy-aware dashboards:** Small groups are hidden unless at least five employees have completed the diagnostic.
+- **Data deletion:** Employees can remove their diagnostic responses for the selected organization.
+- **Testing and developer tooling:** Backend and frontend tests, a browser smoke test, CI checks and guarded demo seeding.
+
+## Tech stack
+
+| Layer | Technologies |
+| --- | --- |
+| Frontend | React, Vite, CSS |
+| Backend | Python, FastAPI, SQLAlchemy |
+| Database | SQLite |
+| Authentication | JWT, bcrypt password hashing |
+| AI integration | Mock responses or OpenAI-compatible chat endpoint |
+| Quality checks | pytest, Node.js test runner, GitHub Actions, browser smoke test |
+| Containerization | Docker (configuration provided; local execution not verified) |
 
 ## Quickstart from a clean checkout
 
 Use Python 3.12+ and Node.js 22. GitHub Actions checks Python 3.12 and Node 22; local checks also ran on Python 3.13 and Node 25.
 
-```powershell
+```
 git clone https://github.com/avi4rag/ai-pulse.git
 cd ai-pulse
 python -m venv .venv
@@ -26,30 +50,33 @@ On Linux/macOS, activate with `source .venv/bin/activate` and copy the environme
 
 Open a second terminal in the repository root:
 
-```powershell
+```
 python scripts/manage.py frontend
 ```
 
-Open http://localhost:5173. Backend API documentation is at http://localhost:8000/docs. The frontend defaults to http://localhost:8000; set `VITE_API_URL` in the frontend process environment before starting or building if the API runs elsewhere.
+Open [http://localhost:5173](http://localhost:5173/). Backend API documentation is at [http://localhost:8000/docs](http://localhost:8000/docs). The frontend defaults to [http://localhost:8000](http://localhost:8000/); set `VITE_API_URL` in the frontend process environment before starting or building if the API runs elsewhere.
 
-The seed command **deletes and recreates local demo tables**. It only accepts explicit `DEV_MODE=true` and the relative SQLite database `./aipulse.db` or `./test.db`. Do not point it at real data. Demo passwords are all `pulse123`; these are not production accounts.
+The seed command **deletes and recreates local demo tables**. It requires `DEV_MODE=true` and a relative SQLite database path of `./aipulse.db` or `./test.db`. **Never run it against real data.**
 
-| Account | Organization | Use in the demo |
-|---|---|---|
-| asha@northwind.test | Northwind Logistics | Administrator dashboard |
-| meera@bluepeak.test | Bluepeak Retail | Separate organization dashboard |
-| ravi@consult.test | Both | Employee at Northwind, admin at Bluepeak |
-| neha@northwind.test | Northwind Logistics | Completed Sales diagnostic; useful for deletion demo |
-| priya@northwind.test | Northwind Logistics | Support employee with existing risk evidence |
-| dev@northwind.test | Northwind Logistics | Lead engineer |
+## Demo accounts (password `pulse123`)
 
-Sales starts with five completed diagnostics. Other departments remain small or incomplete so the hiding behavior is visible.
+| **Email** | **Organization(s)** | **Role** |
+| --- | --- | --- |
+| [asha@northwind.test](mailto:asha@northwind.test) | Northwind Logistics | Admin |
+| [meera@bluepeak.test](mailto:meera@bluepeak.test) | Bluepeak Retail | Admin |
+| [ravi@consult.test](mailto:ravi@consult.test) | Both | Employee at Northwind, admin at Bluepeak |
+| [priya@northwind.test](mailto:priya@northwind.test) | Northwind Logistics | Employee (Support) |
+| [dev@northwind.test](mailto:dev@northwind.test) | Northwind Logistics | Employee (Engineering, lead) |
+
+These are **local demo credentials only**. Do not use this password in production.
+
+The seed also includes `neha@northwind.test` (Northwind Sales), whose completed diagnostic is used to demonstrate data deletion and the five-person privacy threshold. Sales initially has five completed diagnostics; smaller or incomplete departments illustrate hidden dashboard groups.
 
 ## Run and test
 
 Run these from the repository root with the Python environment active:
 
-```powershell
+```
 python scripts/manage.py test
 python scripts/manage.py build
 cd frontend
@@ -62,7 +89,7 @@ cd ..
 
 A real browser smoke test is available after installing dependencies and building:
 
-```powershell
+```
 node scripts/browser-smoke.mjs
 ```
 
@@ -82,24 +109,24 @@ Existing deprecation warnings come from the datetime default and test-client dep
 6. Answers belong to a membership, not just a user. A database constraint permits one answer per membership and question. SQLite upsert replaces it on resubmit.
 7. Personal reports are computed from that membership's answers. Dashboard results use completed people in the token's organization and enforce the privacy threshold before returning scores or risks.
 
-For a file-by-file study guide and debugging exercises, see [docs/EXPLAINING_THE_CODE.md](docs/EXPLAINING_THE_CODE.md).
+For a file-by-file study guide and debugging exercises, see [docs/EXPLAINING_THE_CODE.md](https://github.com/avi4rag/ai-pulse/blob/main/docs/EXPLAINING_THE_CODE.md).
 
 ## What I found wrong and fixed
 
-| Problem I found | What changed |
-|---|---|
-| An admin could change a dashboard URL to read another company | The dashboard uses only the authenticated membership's organization; the URL parameter is ignored |
-| The cross-org test checked the admin's own organization | It now requests another organization and checks that only the selected organization's results return |
-| Organization selection did not check membership | Nonmembers receive 403 before a token is issued |
-| A signing secret was tracked and passwords used unsalted SHA-256 | `.env` is untracked, production secret checks are enforced and bcrypt adds a random salt to every password |
-| Wildcard CORS, an incorrect Docker entrypoint and unsafe seeding | Explicit configurable origins, `app.main:app`, selective image copies, a non-root user and a guarded local seed |
-| Headcount distorted averages and maturity scales disagreed | Average each scored person first, then average those people equally; use one shared scale |
-| Seniority used alphabetic order | An explicit map orders junior, mid, senior, lead |
-| Repeat submits duplicated answers and accepted unrelated questions | Unique membership/question pairs, atomic replacement and server-side assignment validation |
-| AI output was parsed without validation or recovery | Validate scores, reasons and flags; retry once; save unscored on failure |
-| Small groups and their risk flags were visible | Require five completers for a department or anonymous combined group; exclude hidden groups from risks and counts |
-| Employees could not delete their data | Membership-scoped deletion updates reports and dashboards from remaining rows immediately |
-| Screens dumped JSON and lost session state | Plain-CSS screens with progress, suggestions, confirmation, loading/errors, refresh persistence and logout |
+| **Problem I found**                                                | **What changed**                                                                                                  |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| An admin could change a dashboard URL to read another company      | The dashboard uses only the authenticated membership's organization; the URL parameter is ignored                 |
+| The cross-org test checked the admin's own organization            | It now requests another organization and checks that only the selected organization's results return              |
+| Organization selection did not check membership                    | Nonmembers receive 403 before a token is issued                                                                   |
+| A signing secret was tracked and passwords used unsalted SHA-256   | `.env` is untracked, production secret checks are enforced and bcrypt adds a random salt to every password        |
+| Wildcard CORS, an incorrect Docker entrypoint and unsafe seeding   | Explicit configurable origins, `app.main:app`, selective image copies, a non-root user and a guarded local seed   |
+| Headcount distorted averages and maturity scales disagreed         | Average each scored person first, then average those people equally; use one shared scale                         |
+| Seniority used alphabetic order                                    | An explicit map orders junior, mid, senior, lead                                                                  |
+| Repeat submits duplicated answers and accepted unrelated questions | Unique membership/question pairs, atomic replacement and server-side assignment validation                        |
+| AI output was parsed without validation or recovery                | Validate scores, reasons and flags; retry once; save unscored on failure                                          |
+| Small groups and their risk flags were visible                     | Require five completers for a department or anonymous combined group; exclude hidden groups from risks and counts |
+| Employees could not delete their data                              | Membership-scoped deletion updates reports and dashboards from remaining rows immediately                         |
+| Screens dumped JSON and lost session state                         | Plain-CSS screens with progress, suggestions, confirmation, loading/errors, refresh persistence and logout        |
 
 I chose these maturity thresholds because the underlying answers use whole-number scores from 1 to 5: below 2 is Beginner, below 3 is Exploring, below 4 is Practitioner, otherwise Leader. Both reports and dashboards use the unrounded average to choose the level. Rounding is only for display.
 
@@ -148,7 +175,7 @@ Suggestions are regenerated rather than stored. After deletion there are no answ
 
 Generate a new signing secret locally:
 
-```powershell
+```
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
@@ -158,14 +185,14 @@ Existing SHA-256 hashes are not accepted by bcrypt verification. Development use
 
 The image copies only requirements, app code and data, excludes environment files with `.dockerignore`, runs as an unprivileged user, and starts `app.main:app`:
 
-```powershell
+```
 docker build -t ai-pulse backend
 docker run --rm -p 8000:8000 --env-file backend/.env ai-pulse
 ```
 
 That command is a local smoke setup. A production container needs production environment settings, persistent storage, HTTPS termination and operational controls. Docker execution was not verified here because the daemon was not running.
 
-## What I deliberately left out
+## Current limitations
 
 A clean install exposed existing Vite/esbuild advisories, including a high-severity Windows development-tooling issue. I updated the existing Vite dependency from 5.4.11 to patched 6.4.4, which the current React plugin supports, and regenerated the lockfile. I chose this smaller upgrade instead of forcing the newest major. See the [maintainer advisory](https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm) and [Vite migration guidance](https://v6.vite.dev/guide/migration). The updated dependency graph reports zero known npm vulnerabilities at validation time. A new development-server CORS test fails on the old Vite version and passes on the patched version. The npm advisory scan is a useful check, not a complete dependency or application audit.
 
@@ -177,13 +204,15 @@ A clean install exposed existing Vite/esbuild advisories, including a high-sever
 - A full dependency/security audit, model-quality evaluation and comprehensive accessibility testing. Passing functional tests is not a production security certification.
 - Push updates for open dashboards, long-running AI jobs, and caching. Live AI can delay requests and uses a synchronous transport.
 
-## How I used AI tools, honestly
+## How I used AI tools
 
-I used Codex to inspect the repository, implement fixes, write tests, run checks and create PRs. I initially requested a guided learning workflow, then explicitly authorized autonomous implementation and PR merges. I have not claimed to personally review every generated line during that autonomous run. My next task is to review the code myself, use the study guide, and practise explaining and changing it without AI before the assessment.
+I used Codex as a development assistant while working through the project task by task. My workflow was to identify a problem, describe the expected behavior and write down my proposed approach. I then used AI to explore possible solutions, clarify implementation details, troubleshoot errors and help with code and tests before moving on to the next task.
 
-One place where AI got it wrong: Codex wrote a privacy test that accessed a SQLAlchemy membership object after closing its session. SQLAlchemy had expired the object's attributes on commit, so the test raised `DetachedInstanceError`. The correction was to save the integer ID while the session was still open. A second test incorrectly counted rows before committing setup with autoflush disabled. These errors and their corrections are recorded in [AI_NOTES.md](AI_NOTES.md).
+AI assisted with repository inspection, implementation, test creation and running checks. That assistance does not mean I personally wrote or reviewed every generated line. I am reviewing the code, using the [code explanation guide](docs/EXPLAINING_THE_CODE.md), and practising explaining and modifying it independently for the assessment.
 
-I should only describe a change as personally reviewed after I have actually reviewed it. These first-person assessment notes are a draft for me to check and adapt to my own understanding.
+AI also made mistakes. In one privacy test, Codex accessed a SQLAlchemy membership object after its session had closed. Because the object's attributes had expired on commit, the test raised `DetachedInstanceError`. The fix was to capture the integer ID while the session was still open. Another test counted rows before committing its setup data while autoflush was disabled. Both issues and their corrections are documented in [AI_NOTES.md](AI_NOTES.md).
+
+I only describe code as personally reviewed once I have actually checked it. The purpose of using AI here was to support problem-solving and learning, not to replace understanding of the implementation.
 
 ## Demo recording checklist
 
@@ -194,23 +223,6 @@ I should only describe a change as personally reviewed after I have actually rev
 5. Sign in as an employee and try submitting an incomplete diagnostic. Fill every answer, show progress, submit, inspect the report and its three actions, then refresh to show session persistence.
 6. Explain the score validator with the ten canned replies: fenced JSON, score 7, score `four`, missing reason and unknown flags. Show the parametrized tests and the unscored fallback.
 7. Show the explicit seniority rank, shared maturity function, equal-person average test, and database uniqueness/resubmit test.
-8. Reseed if needed, sign in as Neha, open My report, cancel deletion once, then confirm. Show the empty report. Sign in as Asha again and show Sales disappears when completions drop to four.
+8. Reseed if needed, sign in as Neha (`neha@northwind.test`), open My report, cancel deletion once, then confirm. Show the empty report. Sign in as Asha again and show Sales disappears when completions drop to four.
 9. Show `.env.example`, `.gitignore`, the seed guard, Dockerfile and `AI_NOTES.md`. Do not display a real secret on screen.
 10. Show a narrow/mobile layout, logout and an error state. Explain the production limitations and client questions rather than claiming everything is production-ready.
-
-## Pull requests
-
-Each job has its own branch and merge commit. The existing history was kept.
-
-| Job | PR |
-|---|---|
-| Tenant isolation | [#1](https://github.com/avi4rag/ai-pulse/pull/1) |
-| Secrets and passwords | [#2](https://github.com/avi4rag/ai-pulse/pull/2) |
-| Scoring and questions | [#3](https://github.com/avi4rag/ai-pulse/pull/3) |
-| AI validation | [#4](https://github.com/avi4rag/ai-pulse/pull/4) |
-| Small-group privacy | [#5](https://github.com/avi4rag/ai-pulse/pull/5) |
-| Right to delete | [#6](https://github.com/avi4rag/ai-pulse/pull/6) |
-| Personal suggestions | [#7](https://github.com/avi4rag/ai-pulse/pull/7) |
-| Developer experience | [#8](https://github.com/avi4rag/ai-pulse/pull/8) |
-| Frontend | [#9](https://github.com/avi4rag/ai-pulse/pull/9) |
-| Assessment documentation | [#10](https://github.com/avi4rag/ai-pulse/pull/10) |
