@@ -19,7 +19,7 @@ def test_admin_dashboard(client):
     org_id = data["organizations"][0]["org_id"]
     r = client.get(f"/dashboard?org_id={org_id}", headers=headers)
     assert r.status_code == 200
-    assert len(r.json()["departments"]) == 4
+    assert any(d["department"] == "Sales" and d["responded"] >= 5 for d in r.json()["departments"])
 
 
 def test_admin_cannot_see_other_org(client):
@@ -27,7 +27,7 @@ def test_admin_cannot_see_other_org(client):
     r = client.get("/dashboard?org_id=2", headers=headers)
     assert r.status_code == 200
     assert r.json()["organization"] == "Northwind Logistics"
-    assert {d["department"] for d in r.json()["departments"]} == {"Sales", "Support", "Engineering", "HR"}
+    assert {d["department"] for d in r.json()["departments"]} == {"Sales", "Other teams"}
 
 
 def test_select_org_rejects_nonmembership(client):

@@ -19,3 +19,9 @@ Averaged each respondent before departments, shared the <2/<3/<4 maturity scale,
 ## Job 4: AI validation
 
 Validated all ten canned replies, stripped code fences, required integer scores 1–5 (excluding booleans), filtered flags, defaulted reasons and retried once before saving unscored answers. Separated system instructions from JSON employee data and bounded live requests to 15 seconds per attempt. Tests cover malformed shapes, retries, HTTP/timeout failures, prompt separation and unscored persistence. Prompt separation reduces injection risk; it does not prove model obedience. No new implementation mistake found.
+
+## Job 5: Small-group privacy
+
+Defined completion as a nonempty answer to every currently assigned question, including unscored open answers. Only completers contribute scores and risks. Departments need five completers; smaller departments combine anonymously only if Other teams reaches five, otherwise return just a hidden placeholder without names or counts. Seed now has five completed Sales members and small incomplete departments. Updated earlier tests for this intentional seed change.
+
+My mistake: a privacy test accessed an expired SQLAlchemy object after its session closed, causing DetachedInstanceError. I saved its integer ID before closing the session and reran the suite.
